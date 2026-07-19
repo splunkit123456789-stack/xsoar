@@ -238,7 +238,7 @@ Worker 状态响应：
 
 ```bash
 # 安装 CLI
-pip install soar-cli
+go install github.com/soar/soar-cli@latest
 
 # 初始化 APP 项目
 soar init my-app --template=basic

@@ -12,9 +12,7 @@ apps/
 │   ├── app.json          # APP 元信息（必需）
 │   ├── icon.png          # APP 图标（可选，默认使用系统图标）
 │   ├── readme.md         # APP 使用说明（可选）
-│   └── main/
-│       ├── __init__.py   # APP 入口（必需）
-│       └── handler.py    # APP 执行逻辑（必需）
+│   └── plugin.go         # APP 执行逻辑（必需）
 ```
 
 ### 1.2 APP 生命周期
@@ -106,88 +104,120 @@ apps/
 | `datetime` | 日期时间选择器 | 格式 YYYY-MM-DD HH:MM:SS | P1 |
 | `file` | 文件上传 | 最大 10MB | P1 |
 
-## 3. main/ 执行逻辑规范
+## 3. plugin.go 执行逻辑规范
 
 ### 3.1 入口函数
 
-每个 action 的 `func` 对应 `main/handler.py` 中的一个函数。
+每个 action 的 `func` 对应 `plugin.go` 中的一个函数。
 
-```python
-# apps/helloworld/main/handler.py
+```go
+// plugins/helloworld/plugin.go
 
-def hello_world(args, context):
-    """
-    args: dict - 用户配置的参数，如 {"name": "W5"}
-    context: dict - 执行上下文，包含：
-        - exec_id: str - 当前执行 ID
-        - node_id: str - 当前节点 ID
-        - workflow_uuid: str - 当前剧本 UUID
-        - workflow_name: str - 当前剧本名称
-        - variables: dict - 全局变量
-        - logger: Logger - 日志记录器
-        - redis: Redis - Redis 客户端
-        - http: HTTPClient - HTTP 请求客户端
-        - secrets: Secrets - 密钥管理器（P1 可用）
-    return: dict - 执行结果，支持任意 JSON 可序列化格式
-    """
-    name = args.get("name", "World")
-    result = f"Hello {name}"
+package helloworld
 
-    context["logger"].info(f"HelloWorld executed: name={name}, result={result}")
+import (
+    "context"
+    "fmt"
+)
 
-    return {
-        "result": result
+type App struct{}
+
+type Args struct {
+    Name string `json:"name"`
+}
+
+type Result struct {
+    Result string `json:"result"`
+}
+
+func (a *App) HelloWorld(ctx context.Context, args Args) (*Result, error) {
+    // args: 用户配置的参数，如 {"name": "W5"}
+    // ctx: 执行上下文，包含：
+    //   - exec_id: string - 当前执行 ID
+    //   - node_id: string - 当前节点 ID
+    //   - workflow_uuid: string - 当前剧本 UUID
+    //   - workflow_name: string - 当前剧本名称
+    //   - variables: map[string]interface{} - 全局变量
+    //   - logger: *slog.Logger - 日志记录器
+    //   - redis: *redis.Client - Redis 客户端
+    //   - http: *http.Client - HTTP 请求客户端
+    // return: *Result - 执行结果，JSON 可序列化
+    // return: error - 执行失败时返回错误
+
+    name := args.Name
+    if name == "" {
+        name = "World"
     }
+    result := fmt.Sprintf("Hello %s", name)
+
+    slog.Info("HelloWorld executed", "name", name, "result", result)
+
+    return &Result{Result: result}, nil
+}
 ```
 
 ### 3.2 函数签名
 
-```python
-def <func_name>(args: dict, context: dict) -> dict:
-    """APP 执行入口
-    
-    Args:
-        args: 用户配置的参数，已按 app.json args 定义校验
-        context: 执行上下文
-        
-    Returns:
-        dict: 执行结果，必须是 JSON 可序列化
-        
-    Raises:
-        AppExecutionError: 执行失败时抛出，会自动记录到执行日志
-    """
+```go
+// 函数签名
+func (a *App) ActionName(ctx context.Context, args ArgsType) (*ResultType, error)
 ```
 
 ### 3.3 错误处理
 
-```python
-from core.utils.errors import AppExecutionError
+```go
+package myapp
 
-def query_database(args, context):
-    try:
-        # 执行逻辑
-        result = do_query(args["sql"])
-        return {"rows": result, "count": len(result)}
-    except DatabaseConnectionError as e:
-        raise AppExecutionError(f"数据库连接失败: {str(e)}")
-    except Exception as e:
-        raise AppExecutionError(f"执行失败: {str(e)}")
+import (
+    "context"
+    "fmt"
+)
+
+type App struct{}
+
+type QueryArgs struct {
+    SQL string `json:"sql"`
+}
+
+type QueryResult struct {
+    Rows  []map[string]interface{} `json:"rows"`
+    Count int                      `json:"count"`
+}
+
+func (a *App) QueryDatabase(ctx context.Context, args QueryArgs) (*QueryResult, error) {
+    if args.SQL == "" {
+        return nil, fmt.Errorf("VALIDATION_ERROR: sql is required")
+    }
+    return nil, fmt.Errorf("数据库连接失败: %v", err)
+}
 ```
 
 ### 3.4 context 对象
 
-| 字段 | 类型 | 说明 | 可用阶段 |
+Go 插件通过 `context.Context` 获取执行上下文，通过 `context.WithValue` 传递额外信息。
+
+| key 常量 | 类型 | 说明 | 可用阶段 |
 |---|---|---|---|
-| `exec_id` | `str` | 当前执行 ID | MVP |
-| `node_id` | `str` | 当前节点 ID | MVP |
-| `workflow_uuid` | `str` | 当前剧本 UUID | MVP |
-| `workflow_name` | `str` | 当前剧本名称 | MVP |
-| `variables` | `dict` | 全局变量（key-value） | P0 |
-| `logger` | `Logger` | 日志记录器（loguru） | MVP |
-| `redis` | `Redis` | Redis 客户端 | MVP |
-| `http` | `HTTPClient` | HTTP 请求客户端 | MVP |
-| `secrets` | `Secrets` | 密钥管理器 | P1 |
-| `worker_id` | `str` | 执行 Worker ID（分布式场景） | P2 |
+| `CtxKeyExecID` | `string` | 当前执行 ID | MVP |
+| `CtxKeyNodeID` | `string` | 当前节点 ID | MVP |
+| `CtxKeyWorkflowUUID` | `string` | 当前剧本 UUID | MVP |
+| `CtxKeyWorkflowName` | `string` | 当前剧本名称 | MVP |
+| `CtxKeyVariables` | `map[string]interface{}` | 全局变量 | P0 |
+| `CtxKeyLogger` | `*slog.Logger` | 日志记录器 | MVP |
+| `CtxKeyRedis` | `*redis.Client` | Redis 客户端 | MVP |
+| `CtxKeyHTTPClient` | `*http.Client` | HTTP 请求客户端 | MVP |
+| `CtxKeySecrets` | `Secrets` | 密钥管理器 | P1 |
+| `CtxKeyWorkerID` | `string` | 执行 Worker ID | P2 |
+
+```go
+// 插件中获取上下文信息
+func (a *App) HelloWorld(ctx context.Context, args Args) (*Result, error) {
+    execID := ctx.Value(CtxKeyExecID).(string)
+    logger := ctx.Value(CtxKeyLogger).(*slog.Logger)
+    logger.Info("executing", "exec_id", execID)
+    // ...
+}
+```
 
 ## 4. 内置 APP 编写规范
 
@@ -201,8 +231,7 @@ def query_database(args, context):
 - `app.json`：APP 元信息。
 - `icon.png`：APP 图标，建议 128x128 像素，PNG 格式。
 - `readme.md`：APP 使用说明，Markdown 格式。
-- `main/__init__.py`：Python 包初始化，可空。
-- `main/handler.py`：APP 执行逻辑。
+- `plugin.go`：APP 执行逻辑（Go 源码）。
 
 ### 4.3 示例：基础 APP 列表
 
@@ -291,10 +320,8 @@ my-app-v1.0.zip
 ├── app.json          # APP 元信息（必需）
 ├── icon.png          # APP 图标（可选）
 ├── readme.md         # APP 使用说明（可选）
-├── main/             # 执行逻辑（必需）
-│   ├── __init__.py
-│   └── handler.py
-└── requirements.txt  # Python 依赖（可选，P1 不自动安装）
+├── plugin.go         # 执行逻辑（必需）
+└── go.mod            # Go 模块定义（可选）
 ```
 
 ### 5.2 导入校验
@@ -327,51 +354,60 @@ my-app-v1.0.zip
 ### 6.1 安装
 
 ```bash
-pip install soar-app-sdk
+go get github.com/soar/soar-app-sdk
 ```
 
-### 6.2 使用装饰器
+### 6.2 使用 SDK 编写插件
 
-```python
-from soar_app_sdk import SoarApp, SoarAction, SoarParam
+```go
+package myapp
 
-app = SoarApp(
-    name="My App",
-    description="My custom APP",
-    type="集成",
-    version="1.0.0"
+import (
+    "context"
+    "fmt"
+    "net/http"
+    "io"
+    "encoding/json"
 )
 
-@app.action(
-    name="查询数据",
-    func="query_data",
-    params=[
-        SoarParam(key="api_url", type="text", required=True, description="API URL"),
-        SoarParam(key="api_key", type="password", required=True, description="API Key"),
-        SoarParam(key="timeout", type="number", default=30, description="超时时间（秒）"),
-    ]
-)
-def query_data(args, context):
-    """查询外部 API 数据"""
-    import requests
-    response = requests.get(
-        args["api_url"],
-        headers={"Authorization": f"Bearer {args['api_key']}"},
-        timeout=args.get("timeout", 30)
-    )
-    response.raise_for_status()
-    return {"data": response.json()}
+type App struct{}
 
+type QueryDataArgs struct {
+    APIURL  string `json:"api_url"`
+    APIKey  string `json:"api_key"`
+    Timeout int    `json:"timeout"`
+}
 
-if __name__ == "__main__":
-    # 本地调试
-    app.run_debug(args={"api_url": "http://localhost:8000/api", "api_key": "test"})
+type QueryDataResult struct {
+    Data interface{} `json:"data"`
+}
+
+func (a *App) QueryData(ctx context.Context, args QueryDataArgs) (*QueryDataResult, error) {
+    client := &http.Client{}
+    req, err := http.NewRequest("GET", args.APIURL, nil)
+    if err != nil {
+        return nil, fmt.Errorf("request creation failed: %w", err)
+    }
+    req.Header.Set("Authorization", "Bearer "+args.APIKey)
+    
+    resp, err := client.Do(req)
+    if err != nil {
+        return nil, fmt.Errorf("API request failed: %w", err)
+    }
+    defer resp.Body.Close()
+    
+    body, _ := io.ReadAll(resp.Body)
+    var data interface{}
+    json.Unmarshal(body, &data)
+    
+    return &QueryDataResult{Data: data}, nil
+}
 ```
 
 ### 6.3 生成 app.json
 
 ```bash
-python app.py generate-app-json
+go run plugin.go generate-app-json
 ```
 
 输出：
@@ -403,15 +439,15 @@ python app.py generate-app-json
 ### 6.4 打包
 
 ```bash
-python app.py package
+go build -o my-app.so -buildmode=plugin
+# 或打包为 ZIP 供上传
+zip my-app-1.0.0.zip plugin.go app.json icon.png readme.md
 ```
-
-输出：`my-app-1.0.0.zip`
 
 ### 6.5 上传
 
 ```bash
-python app.py upload --url=http://soar.example.com --token=<token>
+soar-cli upload --url=http://soar.example.com --token=<token>
 ```
 
 ## 7. 安全规范
