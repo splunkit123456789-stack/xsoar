@@ -1,0 +1,25 @@
+{
+  "identification": "soar",
+  "is_public": true,
+  "name": "Hello World",
+  "version": "0.1",
+  "description": "SOAR 平台 - Hello World 示例 APP",
+  "type": "基础应用",
+  "action": [
+    {
+      "name": "HelloWorld",
+      "func": "hello_world"
+    }
+  ],
+  "args": {
+    "hello_world": [
+      {
+        "key": "name",
+        "type": "text",
+        "required": true,
+        "default": "World",
+        "description": "要问候的名称"
+      }
+    ]
+  }
+}

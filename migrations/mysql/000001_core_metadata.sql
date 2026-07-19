@@ -203,7 +203,7 @@ INSERT INTO `soar_role_permission` (`role_id`, `permission_code`) VALUES
 
 -- 默认管理员账号（密码: admin123）
 INSERT INTO `soar_users` (`account`, `passwd`, `nick_name`, `status`) VALUES
-('admin', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '超级管理员', 0);
+('admin', '$2a$10$YlOl.ZWV2QCwyJMfnbgA4uxMN/K/YLXtWaF8fQ1bjoHosZSnXZIeO', '超级管理员', 0);
 
 -- 绑定管理员角色
 INSERT INTO `soar_user_role` (`user_id`, `role_id`) VALUES (1, 1);

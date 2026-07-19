@@ -32,6 +32,7 @@
             :key="app.code"
             class="app-item"
             draggable="true"
+            @dragstart="onDragStart($event, app.code)"
             :data-testid="`app-node-${app.code}`"
           >
             <div class="app-name">{{ app.name }}</div>
@@ -41,7 +42,14 @@
       </div>
 
       <!-- 中间画布 -->
-      <div class="canvas-area" data-testid="editor-canvas">
+      <div
+        class="canvas-area"
+        data-testid="editor-canvas"
+        @dragover.prevent="onDragOver"
+        @drop.prevent="onDrop"
+        @dragleave="onDragLeave"
+        :class="{ 'drag-over': isDragOver }"
+      >
         <div v-if="nodes.length === 0" class="canvas-empty">
           <el-empty description="从左侧拖拽 APP 到此处开始编排" />
         </div>
@@ -79,6 +87,8 @@ const workflowName = ref('未命名剧本')
 const nodes = ref([])
 const executing = ref(false)
 const isNew = route.params.uuid === 'new'
+const isDragOver = ref(false)
+let nodeIdCounter = 0
 
 onMounted(async () => {
   await appStore.fetchList()
@@ -127,6 +137,49 @@ async function handleExecute() {
 
 function removeNode(index) {
   nodes.value.splice(index, 1)
+}
+
+function onDragStart(e, appCode) {
+  e.dataTransfer.setData('text/plain', appCode)
+  e.dataTransfer.effectAllowed = 'copy'
+}
+
+function onDragOver() {
+  isDragOver.value = true
+}
+
+function onDragLeave() {
+  isDragOver.value = false
+}
+
+function onDrop(e) {
+  isDragOver.value = false
+  // 从拖拽数据中获取 APP code
+  const appCode = e.dataTransfer.getData('text/plain')
+  if (!appCode) return
+
+  // 查找 APP 信息
+  const app = appStore.apps.find(a => a.code === appCode)
+  if (!app) return
+
+  nodeIdCounter++
+  const args = {}
+  // 初始化参数
+  if (app.actions && app.actions.length > 0) {
+    const action = app.actions[0]
+    const actionArgs = appStore.argsMap?.[action.func] || []
+    actionArgs.forEach(arg => {
+      args[arg.key] = arg.default || ''
+    })
+  }
+
+  nodes.value.push({
+    id: `node-${nodeIdCounter}`,
+    name: app.name,
+    appCode: app.code,
+    action: app.actions?.[0]?.func || '',
+    args: args,
+  })
 }
 </script>
 
@@ -209,6 +262,13 @@ function removeNode(index) {
   flex-wrap: wrap;
   gap: 16px;
   align-content: flex-start;
+  transition: background 0.2s, box-shadow 0.2s;
+  border: 2px solid transparent;
+}
+.canvas-area.drag-over {
+  background: #f0f7ff;
+  border-color: #409eff;
+  box-shadow: inset 0 0 12px rgba(64,158,255,0.2);
 }
 .canvas-empty {
   width: 100%;

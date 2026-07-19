@@ -42,6 +42,24 @@ const routes = [
         component: () => import('@/pages/LogList.vue'),
         meta: { title: '执行日志', icon: 'Document' },
       },
+      {
+        path: 'users',
+        name: 'UserList',
+        component: () => import('@/pages/UserList.vue'),
+        meta: { title: '用户管理', icon: 'User' },
+      },
+      {
+        path: 'roles',
+        name: 'RoleList',
+        component: () => import('@/pages/RoleList.vue'),
+        meta: { title: '角色管理', icon: 'UserFilled' },
+      },
+      {
+        path: 'variables',
+        name: 'VariableList',
+        component: () => import('@/pages/VariableList.vue'),
+        meta: { title: '全局变量', icon: 'Coin' },
+      },
     ],
   },
 ]
