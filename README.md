@@ -41,14 +41,15 @@ cd xsoar
 
 | 维度 | 选型 |
 |---|---|
-| 后端语言 | Python 3.9+ |
-| Web 框架 | Flask 2.x+ |
+| 后端语言 | Go 1.22+ |
+| Web 框架 | Gin |
+| ORM | GORM |
 | 数据库 | MySQL 8.0+ |
 | 缓存 | Redis 6+ |
-| 任务调度 | APScheduler (gevent) |
-| 实时通信 | WebSocket (Flask-Sockets + gevent) |
+| 任务调度 | 内置 Cron + 调度器 |
+| 实时通信 | WebSocket (gorilla/websocket) |
 | 前端 | Vue3 + Vite + Element Plus |
-| 部署 | Docker / Docker-Compose |
+| 部署 | Docker / Docker-Compose / K8s |
 
 ## 测试
 
