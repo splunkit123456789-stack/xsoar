@@ -36,7 +36,7 @@
           <div class="panel-section">
             <div class="section-title">系统组件</div>
             <div class="tools-grid">
-              <div v-for="tool in systemTools" :key="tool.code" class="tool-item" @mousedown.prevent="onDragStart($event, tool)">
+              <div v-for="tool in systemTools" :key="tool.code" class="tool-item" draggable="true" @dragstart="onDragStart($event, tool)">
                 <img :src="tool.icon" class="tool-icon" />
                 <span class="tool-name">{{ tool.name }}</span>
               </div>
@@ -50,7 +50,7 @@
             <div class="section-title">APP 组件</div>
             <el-input v-model="appSearch" placeholder="搜索 APP" size="small" prefix-icon="Search" class="app-search" />
             <div class="tools-grid">
-              <div v-for="app in filteredApps" :key="app.code" class="tool-item" @mousedown.prevent="onDragStart($event, app)">
+              <div v-for="app in filteredApps" :key="app.code" class="tool-item" draggable="true" @dragstart="onDragStart($event, app)">
                 <el-avatar :size="40" :src="app.icon" class="tool-icon">{{ app.name.charAt(0) }}</el-avatar>
                 <span class="tool-name">{{ app.name }}</span>
               </div>
