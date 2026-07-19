@@ -1,28 +1,23 @@
 # SOAR 平台 P2 API 设计
 
-## 1. RBAC API
+## 1. 资源级 Scope API
 
-### 1.1 角色管理
+P0 已实现基础 RBAC API（角色管理、权限点查询、当前用户权限查询），P2 在此基础上增加资源级 Scope 控制。
+
+### 1.1 角色 Scope 管理
 
 | 方法 | 路径 | 用途 |
 |---|---|---|
-| `GET` | `/api/v1/soar/roles` | 查询角色列表 |
-| `POST` | `/api/v1/soar/roles` | 新增角色 |
-| `GET` | `/api/v1/soar/roles/{id}` | 查询角色详情（含权限点和 scope） |
-| `PUT` | `/api/v1/soar/roles/{id}` | 修改角色权限和 scope |
-| `DELETE` | `/api/v1/soar/roles/{id}` | 删除非内置角色 |
-| `GET` | `/api/v1/soar/permissions` | 查询所有权限点 |
+| `PUT` | `/api/v1/soar/roles/{id}/scopes` | 修改角色资源 scope |
+| `GET` | `/api/v1/soar/roles/{id}/scopes` | 查询角色资源 scope |
 
-新增角色请求：
+角色保存请求（含 scope）：
 
 ```json
 {
-  "name": "剧本编辑者",
-  "description": "可创建/编辑/执行剧本",
-  "permissions": [
-    "workflow:read", "workflow:write", "workflow:execute",
-    "app:read", "variable:read"
-  ],
+  "name": "审计搜索用户",
+  "description": "只能搜索审计剧本",
+  "permissions": ["workflow:read", "workflow:execute"],
   "resource_scopes": {
     "workflow": {
       "read": ["wf-uuid-1", "wf-uuid-2"],
@@ -33,13 +28,9 @@
 }
 ```
 
-### 1.2 当前用户权限查询
+### 1.2 当前用户权限查询（P2 扩展）
 
-| 方法 | 路径 | 用途 |
-|---|---|---|
-| `GET` | `/api/v1/soar/me/permissions` | 查询当前用户所有权限点和 scope |
-
-响应示例：
+P0 的 `GET /api/v1/soar/me/permissions` 返回基础权限点，P2 扩展返回 scope 信息：
 
 ```json
 {
