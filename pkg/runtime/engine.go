@@ -6,6 +6,8 @@ import (
 	"log"
 	"sync"
 	"time"
+
+	"github.com/splunkit123456789-stack/xsoar/pkg/plugin"
 )
 
 // Node 剧本节点
@@ -147,9 +149,14 @@ func (e *Engine) Execute(uuid, triggerType string, data map[string]interface{}, 
 }
 
 // executeNode 执行单个节点
-func (e *Engine) executeNode(node Node, context map[string]interface{}) (map[string]interface{}, error) {
-	// 简化版：直接返回成功
-	// 生产环境：通过 plugin.Registry 调用对应 APP 的 Execute 方法
+func (e *Engine) executeNode(node Node, ctx map[string]interface{}) (map[string]interface{}, error) {
+	reg := plugin.GetRegistry()
+	p := reg.GetPlugin(node.AppCode)
+	if p != nil {
+		return p.Execute(node.Action, node.Args, ctx)
+	}
+
+	// 没有注册的 Go 插件时，返回模拟结果
 	return map[string]interface{}{
 		"result": fmt.Sprintf("executed %s/%s", node.AppCode, node.Action),
 	}, nil

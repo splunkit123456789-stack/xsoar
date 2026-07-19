@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/splunkit123456789-stack/xsoar/pkg/ws"
 	"github.com/splunkit123456789-stack/xsoar/services/api/handler"
 	"github.com/splunkit123456789-stack/xsoar/services/api/middleware"
 )
@@ -15,6 +16,11 @@ func SetupRouter() *gin.Engine {
 	// 健康检查
 	r.GET("/healthz", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
+	})
+
+	// WebSocket — 不经过鉴权中间件，由 URL 参数控制
+	r.GET("/ws/workflow/:exec_id", func(c *gin.Context) {
+		ws.GetHub().HandleWebSocket(c.Writer, c.Request)
 	})
 
 	// API v1

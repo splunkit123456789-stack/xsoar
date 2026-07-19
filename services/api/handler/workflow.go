@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/splunkit123456789-stack/xsoar/pkg/storage"
+	"github.com/splunkit123456789-stack/xsoar/pkg/ws"
 	api "github.com/splunkit123456789-stack/xsoar/pkg/response"
 )
 
@@ -120,8 +121,31 @@ func DeleteWorkflow(c *gin.Context) {
 // ExecuteWorkflow 执行剧本
 func ExecuteWorkflow(c *gin.Context) {
 	uuid := c.Param("uuid")
-	// 执行引擎调用（简化版：直接返回执行 ID）
 	execID := "exec-" + time.Now().Format("20060102150405")
+
+	// 通过 WebSocket 广播节点状态变化
+	hub := ws.GetHub()
+	hub.BroadcastNodeStatus(execID, ws.NodeStatus{
+		ExecID:       execID,
+		WorkflowUUID: uuid,
+		NodeID:       "start",
+		Status:       "running",
+		Timestamp:    time.Now().Format("2006-01-02 15:04:05"),
+	})
+
+	// 模拟执行完成后广播完成状态
+	go func() {
+		time.Sleep(500 * time.Millisecond)
+		hub.BroadcastNodeStatus(execID, ws.NodeStatus{
+			ExecID:       execID,
+			WorkflowUUID: uuid,
+			NodeID:       "start",
+			Status:       "success",
+			Timestamp:    time.Now().Format("2006-01-02 15:04:05"),
+		})
+		hub.BroadcastExecutionComplete(execID, uuid, "success")
+	}()
+
 	api.Success(c, gin.H{
 		"exec_id":       execID,
 		"workflow_uuid": uuid,
