@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    restart: always
+    container_name: soar-mysql
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: soar_123456
+      MYSQL_DATABASE: soar_db
+      TZ: Asia/Shanghai
+    volumes:
+      - ./migrations/mysql:/docker-entrypoint-initdb.d
+      - mysql_data:/var/lib/mysql
+    command:
+      --max_connections=1000
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_general_ci
+      --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    container_name: soar-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    container_name: soar-api
+    ports:
+      - "8888:8888"
+    environment:
+      GIN_MODE: release
+      SERVER_HOST: "0.0.0.0"
+      SERVER_PORT: 8888
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: soar_db
+      MYSQL_USER: root
+      MYSQL_PASSWORD: soar_123456
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DATABASE: 0
+      REDIS_PASSWORD: ""
+      JWT_SECRET: "soar-prod-secret-key-change-me"
+      JWT_EXPIRE_HOUR: 24
+      APPS_PATH: "./plugins"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./web/console
+      dockerfile: Dockerfile
+    restart: always
+    container_name: soar-web
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+
+volumes:
+  mysql_data:
+  redis_data:

@@ -14,7 +14,7 @@ test.describe('APP 管理端到端', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.locator('[data-testid="input-account"]').fill('admin');
-    await page.locator('[data-testid="input-password"]').fill('admin_123456');
+    await page.locator('[data-testid="input-password"]').fill('admin123');
     await page.locator('[data-testid="btn-login"]').click();
     await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
   });

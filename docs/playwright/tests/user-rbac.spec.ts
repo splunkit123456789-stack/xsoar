@@ -17,7 +17,7 @@ test.describe('TC-P0-USER 用户与角色管理端到端', () => {
 
   test.beforeAll(async ({ request }) => {
     const loginResp = await request.post(`${API_URL}/api/v1/soar/login`, {
-      data: { account: 'admin', passwd: 'admin_123456' }
+      data: { account: 'admin', passwd: 'admin123' }
     });
     const loginData = await loginResp.json();
     token = loginData.data.token;
@@ -26,7 +26,7 @@ test.describe('TC-P0-USER 用户与角色管理端到端', () => {
   test('TC-P0-USER-001 创建角色', async ({ page }) => {
     await page.goto('/');
     await page.locator('[data-testid="input-account"]').fill('admin');
-    await page.locator('[data-testid="input-password"]').fill('admin_123456');
+    await page.locator('[data-testid="input-password"]').fill('admin123');
     await page.locator('[data-testid="btn-login"]').click();
     await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
 
@@ -46,7 +46,7 @@ test.describe('TC-P0-USER 用户与角色管理端到端', () => {
   test('TC-P0-USER-002 创建用户并绑定角色', async ({ page }) => {
     await page.goto('/');
     await page.locator('[data-testid="input-account"]').fill('admin');
-    await page.locator('[data-testid="input-password"]').fill('admin_123456');
+    await page.locator('[data-testid="input-password"]').fill('admin123');
     await page.locator('[data-testid="btn-login"]').click();
 
     // 导航到用户管理
@@ -69,7 +69,7 @@ test.describe('TC-P0-USER 用户与角色管理端到端', () => {
     // 登出
     await page.goto('/');
     await page.locator('[data-testid="input-account"]').fill('admin');
-    await page.locator('[data-testid="input-password"]').fill('admin_123456');
+    await page.locator('[data-testid="input-password"]').fill('admin123');
     await page.locator('[data-testid="btn-login"]').click();
     await page.locator('[data-testid="user-info"]').click();
     await page.locator('[data-testid="btn-logout"]').click();
@@ -86,7 +86,7 @@ test.describe('TC-P0-USER 用户与角色管理端到端', () => {
   test('TC-P0-USER-004 删除用户', async ({ page }) => {
     await page.goto('/');
     await page.locator('[data-testid="input-account"]').fill('admin');
-    await page.locator('[data-testid="input-password"]').fill('admin_123456');
+    await page.locator('[data-testid="input-password"]').fill('admin123');
     await page.locator('[data-testid="btn-login"]').click();
 
     await page.locator('[data-testid="nav-system"]').click();
@@ -104,7 +104,7 @@ test.describe('TC-P0-USER 用户与角色管理端到端', () => {
   test('TC-P0-USER-005 不允许删除自己', async ({ page }) => {
     await page.goto('/');
     await page.locator('[data-testid="input-account"]').fill('admin');
-    await page.locator('[data-testid="input-password"]').fill('admin_123456');
+    await page.locator('[data-testid="input-password"]').fill('admin123');
     await page.locator('[data-testid="btn-login"]').click();
 
     await page.locator('[data-testid="nav-system"]').click();

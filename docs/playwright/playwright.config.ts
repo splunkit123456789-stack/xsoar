@@ -11,7 +11,7 @@ export default defineConfig({
     ['list']
   ],
   use: {
-    baseURL: process.env.SOAR_URL || 'http://127.0.0.1:8888',
+    baseURL: process.env.SOAR_URL || 'http://127.0.0.1:3000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
@@ -22,7 +22,6 @@ export default defineConfig({
       name: 'admin',
       use: {
         ...devices['Desktop Chrome'],
-        storageState: 'playwright/.auth/admin.json',
       },
       testMatch: '**/*.spec.ts',
     },

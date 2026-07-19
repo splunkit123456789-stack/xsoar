@@ -20,7 +20,7 @@ test.describe('TC-P0-WEBHOOK Webhook 触发器端到端', () => {
   test.beforeAll(async ({ request }) => {
     // 获取 API Key
     const loginResp = await request.post(`${API_URL}/api/v1/soar/login`, {
-      data: { account: 'admin', passwd: 'admin_123456' }
+      data: { account: 'admin', passwd: 'admin123' }
     });
     const loginData = await loginResp.json();
     token = loginData.data.token;
@@ -36,7 +36,7 @@ test.describe('TC-P0-WEBHOOK Webhook 触发器端到端', () => {
   test('TC-P0-WEBHOOK-001 启用 Webhook 触发', async ({ page }) => {
     await page.goto('/');
     await page.locator('[data-testid="input-account"]').fill('admin');
-    await page.locator('[data-testid="input-password"]').fill('admin_123456');
+    await page.locator('[data-testid="input-password"]').fill('admin123');
     await page.locator('[data-testid="btn-login"]').click();
     await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
 
